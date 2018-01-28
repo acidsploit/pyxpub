@@ -55,6 +55,8 @@ Set up a vhost with following location and proxy_pass:
 
 Allow localhost access to port 8080 in your firewall.
 
+    iptables -A INPUT -i lo -p tcp -m tcp --dport 8080 -j ACCEPT
+
 
 ## Usage
 ### Direct access
