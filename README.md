@@ -41,7 +41,12 @@ Browse to http://127.0.0.1:8080;
 
 __access though nginx reverse proxy__
 
-Set up a vhost with following location and proxy_pass:
+Set up a vhost with following locations and proxy_pass:
+
+    # Avoid robots
+    location /robots.txt {
+        return 200 "User-agent: *\nDisallow: /";
+    }
 
     location  / {
         proxy_pass          http://127.0.0.1:8080;
