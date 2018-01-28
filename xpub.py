@@ -98,14 +98,11 @@ def get_xpub_address(xpub, index):
   xpub_subkey = xpub.subkey(account_type)
   addr = xpub_subkey.subkey(index).bitcoin_address()
   caddr = convert.to_cash_address(addr)
-  
   # increment index
   f = open('index', 'w+')
   index += 1
   f.write(str(index))
   f.close()
-  
-  
   return(caddr)
 
 def get_qr(parameters):
@@ -116,9 +113,7 @@ def get_qr(parameters):
   qr.add_data(parameters['addr'][0].upper().rstrip('/'))
 #  qr.add_data(parameters['addr'][0].rstrip('/'))
   qr.make(fit=True)
-
   img = qr.make_image()
-  
   return img
   
 def check_ip(ip):
@@ -129,7 +124,6 @@ def check_ip(ip):
       if pair[0] == ip:
         f.close()
         return pair[1].strip('\n')
-      
     f.close()
     return False
   except (FileNotFoundError):
@@ -150,7 +144,6 @@ def webapp(environ, start_response):
     status = '200 OK'
     headers = [('Content-type', 'image/png')]
     start_response(status, headers)
-    
     img = get_qr(parameters)
     output = io.BytesIO()
     img.save(output, format='PNG')
@@ -159,7 +152,6 @@ def webapp(environ, start_response):
     status = '200 OK' # HTTP Status
     headers = [('Content-type', 'text/html; charset=utf-8')]  # HTTP Headers
     start_response(status, headers)
-    
     addr = check_ip(ip_addr)
     if addr:
       print(ip_addr + " - " + addr)
@@ -172,17 +164,16 @@ def webapp(environ, start_response):
       index = get_index()
       xpub = get_xpub()
       addr = get_xpub_address(xpub, index)
-    
+      # log request ip and generated addr
       f = open('ip.list', 'a')
       f.write(ip_addr + '/' + addr + '\n')
       f.close()
-      
       print(ip_addr + " - " + addr)
+      # generate html
       html =  "<html>"
       html += "<center><img src=/qr?addr=" + addr + "/></center><br />"
       html += "<center>" + addr + "</center>"
       html += "</html>"
-
       page = html.encode('utf-8')
   
   return [page]
@@ -190,7 +181,6 @@ def webapp(environ, start_response):
 def start_server():
   with make_server('', 8080, webapp) as httpd:
     print("Serving on port 8080...")
-
     # Serve until process is killed
     httpd.serve_forever()
 
