@@ -58,9 +58,11 @@ Allow localhost access to port 8080 in your firewall.
 
 ## Usage
 ### Direct access
-As noted in the installation instructions, you can access the webapp locally though https://localhost:8080 or directly through the vhost you setup.
+As noted in the installation instructions, you can access the webapp locally through https://localhost:8080 or directly through the vhost you set up.
 
 Example: https://donate.devzero.be
+
+![pyxpub example](https://i.imgur.com/pYYWfWR.png)
 
 ### Embedded iframe
 
