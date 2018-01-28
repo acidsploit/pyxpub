@@ -46,7 +46,7 @@ def find_data_dir():
       print('Using {dir} as data directory'.format(dir=data_dir))
       break
 
-# Read index file
+# Read index file or create one if it does not exist
 def get_index():
   try:
     f = open('index', 'r')
@@ -70,7 +70,7 @@ def get_index():
       print('Could not open index file. Check permissions.')
       sys.exit(2)
 
-# Read the key list
+# Read the xpub key from  key.list file
 def get_xpub():
   xpub = 0
   try:
@@ -90,7 +90,7 @@ def get_xpub():
     print('Could not open key.list')
     sys.exit(2)
 
-# get xpub address
+# Derive address from xpub key and increment address index
 def get_xpub_address(xpub, index):
   # 0 => public addresses
   # 1 => change addresses, only for internal use
@@ -98,13 +98,16 @@ def get_xpub_address(xpub, index):
   xpub_subkey = xpub.subkey(account_type)
   addr = xpub_subkey.subkey(index).bitcoin_address()
   caddr = convert.to_cash_address(addr)
+  
   # increment index
   f = open('index', 'w+')
   index += 1
   f.write(str(index))
   f.close()
+  
   return(caddr)
 
+# Generate QR code and return the image
 def get_qr(parameters):
   qr = qrcode.QRCode(
     error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -114,8 +117,12 @@ def get_qr(parameters):
 #  qr.add_data(parameters['addr'][0].rstrip('/'))
   qr.make(fit=True)
   img = qr.make_image()
-  return img
   
+  return img
+
+# Check if requesting ip already generated a qr code, re-use previously generated address.
+# This is done to prevent snooping and page reloads to waste addresses.
+# You can setup a cron job to delete ip.list to wipe ip history at desired interval.
 def check_ip(ip):
   try:
     f = open('ip.list', 'r')
@@ -144,6 +151,7 @@ def webapp(environ, start_response):
     status = '200 OK'
     headers = [('Content-type', 'image/png')]
     start_response(status, headers)
+    
     img = get_qr(parameters)
     output = io.BytesIO()
     img.save(output, format='PNG')
@@ -152,6 +160,7 @@ def webapp(environ, start_response):
     status = '200 OK' # HTTP Status
     headers = [('Content-type', 'text/html; charset=utf-8')]  # HTTP Headers
     start_response(status, headers)
+    
     addr = check_ip(ip_addr)
     if addr:
       print(ip_addr + " - " + addr)
@@ -164,16 +173,17 @@ def webapp(environ, start_response):
       index = get_index()
       xpub = get_xpub()
       addr = get_xpub_address(xpub, index)
-      # log request ip and generated addr
+    
       f = open('ip.list', 'a')
       f.write(ip_addr + '/' + addr + '\n')
       f.close()
+      
       print(ip_addr + " - " + addr)
-      # generate html
       html =  "<html>"
       html += "<center><img src=/qr?addr=" + addr + "/></center><br />"
       html += "<center>" + addr + "</center>"
       html += "</html>"
+
       page = html.encode('utf-8')
   
   return [page]
@@ -195,3 +205,4 @@ def main():
 
 if __name__ == "__main__":
   main()
+  
