@@ -49,7 +49,7 @@ Browse to http://127.0.0.1:8080;
 
 __access though nginx reverse proxy__
 
-Set up a vhost with following locations and proxy_pass:
+Set up a vhost (preferably with ssl) with following locations and proxy_pass:
 
     # Avoid robots
     location /robots.txt {
