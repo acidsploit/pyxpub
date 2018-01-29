@@ -111,7 +111,7 @@ def get_xpub_address(xpub, index):
 def get_qr(parameters):
   qr = qrcode.QRCode(
     error_correction=qrcode.constants.ERROR_CORRECT_L,
-    border=4,
+    border=2,
   )
   qr.add_data(parameters['addr'][0].upper().rstrip('/'))
 #  qr.add_data(parameters['addr'][0].rstrip('/'))
@@ -130,6 +130,7 @@ def check_ip(ip):
       pair = line.split('/')
       if pair[0] == ip:
         f.close()
+        # return bitcoin address linked to ip
         return pair[1].strip('\n')
     f.close()
     return False
@@ -138,6 +139,27 @@ def check_ip(ip):
     f = open('ip.list', 'w+')
     f.close()
     return False
+
+# Utility wrapper function
+def load_file(filename):
+	try:
+		src = open(filename, 'r')
+	except (IOError, OSError, FileNotFoundError, PermissionError):
+		src = open(os.path.join(lib_dir, filename), 'r')
+	data = src.read()
+	src.close()
+	return data
+  
+def generate_html(addr):
+  html =  "<!doctype html>\n"
+  html += "<html>\n"
+  html += '<head><script src="jquery.min.js"></script>\n'
+  html += '<script src="script.js"></script></head>\n'
+  html += "<body>\n"
+  html += '<center><img onclick="copyToClipboard(\'#ca\')" src=/qr?addr=' + addr + '/><br />(Click QR to Copy)</center>\n'
+  html += '<p id="ca" align=center>' + addr + '</p>\n'
+  html += "</body></html>\n"
+  return html
 
 def webapp(environ, start_response):
   if 'HTTP_X_REAL_IP' in environ:
@@ -156,6 +178,13 @@ def webapp(environ, start_response):
     output = io.BytesIO()
     img.save(output, format='PNG')
     page = output.getvalue()
+  elif request.endswith('.js'):
+    status = '200 OK'
+    headers = [('Content-type', 'text/javascript')]
+    start_response(status, headers)
+    
+    req = load_file(os.path.join('assets', request))
+    page = req.encode('utf-8')
   else:
     status = '200 OK' # HTTP Status
     headers = [('Content-type', 'text/html; charset=utf-8')]  # HTTP Headers
@@ -164,10 +193,7 @@ def webapp(environ, start_response):
     addr = check_ip(ip_addr)
     if addr:
       print(ip_addr + " - " + addr)
-      html =  "<html>"
-      html += "<center><img src=/qr?addr=" + addr + "/></center><br />"
-      html += "<center>" + addr + "</center>"
-      html += "</html>"
+      html = generate_html(addr)
       page = html.encode('utf-8')
     else:
       index = get_index()
@@ -179,11 +205,7 @@ def webapp(environ, start_response):
       f.close()
       
       print(ip_addr + " - " + addr)
-      html =  "<html>"
-      html += "<center><img src=/qr?addr=" + addr + "/></center><br />"
-      html += "<center>" + addr + "</center>"
-      html += "</html>"
-
+      html = generate_html(addr)
       page = html.encode('utf-8')
   
   return [page]
