@@ -77,7 +77,7 @@ As noted in the installation instructions, you can access the webapp locally thr
 
 Example: https://donate.devzero.be
 
-![pyxpub example](https://i.imgur.com/pYYWfWR.png)
+![pyxpub example](https://i.imgur.com/e95e9Sz.png)
 
 ### Embedded iframe
 
