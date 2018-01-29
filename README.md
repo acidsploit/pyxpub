@@ -40,7 +40,7 @@ __run__
 
     cd pyxpub/
     source env/bin/activate
-    ./xpub.py
+    python ./xpub.py
 
 __access locally__
 
