@@ -104,7 +104,7 @@ Options:
 
         http://localhost:8080/payment?amount=0.0023&label=SHOP:PAYM123
 
-![pyxpub example 4](https://i.imgur.com/vSGGMKg.png)
+![pyxpub example 4](https://i.imgur.com/wYjhjMk.png)
 
         curl 'http://localhost:8080/payment?amount=0.0023&label=SHOP:PAYM123'
 
