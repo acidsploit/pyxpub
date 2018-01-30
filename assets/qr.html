@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <title>QR</title>
@@ -8,11 +8,12 @@
   </head>
   <body>
     <center>
-      <img onclick="copyToClipboard('#ca')" src="{qruri}" />
+      <img onclick="copyToClipboard('#copy')" src="{qruri}" />
       <br />
       (Click QR to Copy)
     </center>
-    <p id="ca" align="center">{addr}</p>
-    <p id="ca" align="center">{label}</p>
+    <p hidden id="copy">{copy}</p>
+    <p id="address" align="center">{addr}</p>
+    <p align="center">{label}</p>
   </body>
 </html>
