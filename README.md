@@ -1,6 +1,6 @@
 # pyxpub - Private Payment Gateway
  
-Pyxpub is a simple selfhosted webapp that displays a webpage with a Bitcoin Cash address and corresponding QR code derived from a pre-defined (Electron Cash) xpub key. It can be accessed directly, be embedded in a webpage through an iframe or be called through a script.
+Pyxpub is a simple selfhosted webapp that displays a webpage with a Bitcoin Cash address and corresponding QR code derived from a pre-defined (Electron Cash) xpub key. It can be accessed directly, be embedded in a webpage through an iframe, or you can do JSON requests through the API.
 
 ## Introduction
 As per Bitcoin best practices it is best to use a new receiving address for each payment request. This for security and privacy implications for both you and your customers or donators. Also, we do not want any private keys on the server generating the receiving address, nor would we want them on any PoS system. This can easily be achieved by using an hd-wallet as described in [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki). This is the default wallet type when you create a new wallet with [Electron Cash](https://electroncash.org/).
