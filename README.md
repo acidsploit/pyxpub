@@ -18,7 +18,7 @@ __clone repo__
 
     git clone https://github.com/acidsploit/pyxpub.git pyxpub
 
-__create virtualenv and install dependencies__
+__setup environment__
 
     cd pyxpub/
     bash setup.sh
