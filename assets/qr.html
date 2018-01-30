@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+  <head>
+    <title>QR</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="jquery.min.js"></script>
+    <script src="script.js"></script>
+  </head>
+  <body>
+    <center>
+      <img onclick="copyToClipboard('#ca')" src="/qr?addr={addr}" />
+      <br />
+      (Click QR to Copy)
+    </center>
+    <p id="ca" align="center">{addr}</p>
+  </body>
+</html>
