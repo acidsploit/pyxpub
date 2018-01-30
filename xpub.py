@@ -127,11 +127,11 @@ def check_ip(ip):
   try:
     f = open('ip.list', 'r')
     for line in f.readlines():
-      pair = line.split('/')
-      if pair[0] == ip:
+      _pair = line.split('/')
+      if _pair[0] == ip:
         f.close()
         # return bitcoin address linked to ip
-        return pair[1].strip('\n')
+        return _pair[1].strip('\n')
     f.close()
     return False
   except (FileNotFoundError):
@@ -142,23 +142,20 @@ def check_ip(ip):
 
 # Utility wrapper function
 def load_file(filename):
-	try:
-		src = open(filename, 'r')
-	except (IOError, OSError, FileNotFoundError, PermissionError):
-		src = open(os.path.join(lib_dir, filename), 'r')
-	data = src.read()
-	src.close()
-	return data
+  try:
+    src = open(filename, 'r')
+  except (IOError, OSError, FileNotFoundError, PermissionError):
+    src = open(os.path.join(lib_dir, filename), 'r')
+  data = src.read()
+  src.close()
+  return data
   
-def generate_html(addr):
-  html =  "<!doctype html>\n"
-  html += "<html>\n"
-  html += '<head><script src="jquery.min.js"></script>\n'
-  html += '<script src="script.js"></script></head>\n'
-  html += "<body>\n"
-  html += '<center><img onclick="copyToClipboard(\'#ca\')" src=/qr?addr=' + addr + '/><br />(Click QR to Copy)</center>\n'
-  html += '<p id="ca" align=center>' + addr + '</p>\n'
-  html += "</body></html>\n"
+def generate_qr_html(addr):
+  filler = {
+    'addr': addr,
+  }
+  html = load_file('assets/qr.html').format(**filler)
+
   return html
 
 def webapp(environ, start_response):
@@ -170,20 +167,35 @@ def webapp(environ, start_response):
   parameters = urllib.parse.parse_qs(environ['QUERY_STRING'])
   
   if request == 'qr':
-    status = '200 OK'
-    headers = [('Content-type', 'image/png')]
-    start_response(status, headers)
-    
-    img = get_qr(parameters)
-    output = io.BytesIO()
-    img.save(output, format='PNG')
-    page = output.getvalue()
+    if convert.is_valid(parameters['addr'][0].rstrip('/')):
+      status = '200 OK'
+      headers = [('Content-type', 'image/png')]
+      start_response(status, headers)
+      
+      img = get_qr(parameters)
+      output = io.BytesIO()
+      img.save(output, format='PNG')
+      page = output.getvalue()
+    else :
+      status = '200 OK'
+      headers = [('Content-type', 'text/html')]
+      start_response(status, headers)
+      message = "Invalid Address!"
+      page = message.encode('utf-8')
   elif request.endswith('.js'):
     status = '200 OK'
     headers = [('Content-type', 'text/javascript')]
     start_response(status, headers)
     
     req = load_file(os.path.join('assets', request))
+    page = req.encode('utf-8')
+  elif request.endswith('.css'):
+    status = '200 OK'
+    headers = [('Content-type', 'text/css')]
+    start_response(status, headers)
+    
+    #req = load_file(os.path.join('assets', request))
+    req = ''
     page = req.encode('utf-8')
   else:
     status = '200 OK' # HTTP Status
@@ -192,8 +204,8 @@ def webapp(environ, start_response):
     
     addr = check_ip(ip_addr)
     if addr:
-      print(ip_addr + " - " + addr)
-      html = generate_html(addr)
+      print("REUSE - " + ip_addr + " - " + addr)
+      html = generate_qr_html(addr)
       page = html.encode('utf-8')
     else:
       index = get_index()
@@ -204,8 +216,8 @@ def webapp(environ, start_response):
       f.write(ip_addr + '/' + addr + '\n')
       f.close()
       
-      print(ip_addr + " - " + addr)
-      html = generate_html(addr)
+      print("NEW - " + ip_addr + " - " + addr)
+      html = generate_qr_html(addr)
       page = html.encode('utf-8')
   
   return [page]
@@ -227,4 +239,3 @@ def main():
 
 if __name__ == "__main__":
   main()
-  
