@@ -66,11 +66,11 @@ Allow localhost access to port 8080 in your firewall.
 
 ## Usage
 ### Direct browser access
-As noted in the installation instructions, you can access the webapp locally through https://localhost:8080 or directly through the vhost you set up.
+As noted in the installation instructions, you can access the webapp locally through http://localhost:8080 or directly through the vhost you set up.
 
 __default page__
 
-    https://localhost:8080/
+    http://localhost:8080/
     
 ![pyxpub example 1](https://i.imgur.com/faDPHsF.png)
 
