@@ -49,7 +49,7 @@ __access locally__
 Browse to http://127.0.0.1:8080;
 
 
-__access though nginx reverse proxy__
+__access through nginx reverse proxy__
 
 Set up a vhost (preferably with ssl) with following locations and proxy_pass:
 
