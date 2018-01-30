@@ -97,6 +97,7 @@ Demo: https://donate.devzero.be
 You can also generate a new JSON formatted payment request through the api.
 
 __payment request__
+
 Options:
 * amount
 * label
