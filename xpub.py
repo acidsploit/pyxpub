@@ -12,7 +12,9 @@ import qrcode
 import io
 import random
 import base64
+import json
 
+#bitcoin stuff
 import pycoin.key
 os.environ["PYCOIN_NATIVE"]="openssl"
 from cashaddress import convert
@@ -107,13 +109,55 @@ def get_xpub_address(xpub, index):
   
   return(caddr)
 
+def get_address(ip):
+  _addr = check_ip(ip)
+  if _addr:
+    print("REUSE - " + ip + " - " + _addr)
+    return _addr
+  else:
+    _index = get_index()
+    _xpub = get_xpub()
+    _addr = get_xpub_address(_xpub, _index)
+    # TODO: add_ip(ip, addr) with propper error handling
+    print("NEW - " + ip + " - " + _addr)
+    f = open('ip.list', 'a')
+    f.write(ip + '/' + _addr + '\n')
+    f.close()
+    
+    return _addr
+
 # Generate QR code and return the image
 def get_qr(parameters):
+  _addr = False
+  _amount = False
+  _label = False
+  _data = ""
+  
+  if 'addr' in parameters:
+     _addr = parameters['addr'][0].upper().rstrip('/')
+     _data = _addr
+  else:
+    return False
+     
+  if 'amount' in parameters and 'label' in parameters:
+    _amount = parameters['amount'][0].rstrip('/')
+    _label = parameters['label'][0].rstrip('/')
+    _data += "?amount=" + _amount
+    _data += "&message=" + _label
+  elif 'amount' in parameters:
+     _amount = parameters['amount'][0].rstrip('/')
+     _data += "?amount=" + _amount
+  elif 'label' in parameters:
+     _label = parameters['label'][0].rstrip('/')
+     _data += "?message=" + _label
+     
+  #print(_data)
+     
   qr = qrcode.QRCode(
     error_correction=qrcode.constants.ERROR_CORRECT_L,
     border=2,
   )
-  qr.add_data(parameters['addr'][0].upper().rstrip('/'))
+  qr.add_data(_data)
 #  qr.add_data(parameters['addr'][0].rstrip('/'))
   qr.make(fit=True)
   img = qr.make_image()
@@ -150,14 +194,56 @@ def load_file(filename):
   src.close()
   return data
   
-def generate_qr_html(addr):
+def generate_qr_html(addr, parameters):
+  _amount = False
+  _label = False
+  _qruri = "/qr?addr=" + addr
+  _amount_label = ""
+  
+  if 'amount' in parameters:
+    _amount = parameters['amount'][0].rstrip('/')
+    _qruri += "&amount=" + _amount
+    _amount_label += "AMOUNT: " + _amount + " BCH "
+  if 'label' in parameters:
+    _label = parameters['label'][0].rstrip('/')
+    _qruri += "&label=" + _label
+    _amount_label += "LABEL: " + _label + " "
+
   filler = {
     'addr': addr,
+    'qruri' : _qruri,
+    'label' : _amount_label,
   }
   html = load_file('assets/qr.html').format(**filler)
 
   return html
 
+def generate_payment(parameters, ip_addr):
+  _amount = False
+  _label = False
+  _addr = get_address(ip_addr)
+  _qr = "/qr?addr=" + _addr
+  
+  if 'amount' in parameters:
+    _amount = parameters['amount'][0]
+    _qr += "&amount=" + _amount
+  if 'label' in parameters:
+    _label = parameters['label'][0]
+    _qr +=  "&message=" + _label
+    
+  _payreq = {
+    "payment": {
+      "amount": _amount,
+      "addr": _addr,
+      "label": _label,
+      "qr": _qr,
+      }
+    }
+    
+  _json = json.dumps(_payreq)
+  return _json
+  
+# main webapp logic
 def webapp(environ, start_response):
   if 'HTTP_X_REAL_IP' in environ:
     environ['REMOTE_ADDR'] = environ['HTTP_X_REAL_IP']
@@ -166,7 +252,26 @@ def webapp(environ, start_response):
   request = environ['PATH_INFO'].lstrip('/').split('/')[-1]
   parameters = urllib.parse.parse_qs(environ['QUERY_STRING'])
   
-  if request == 'qr':
+  # serve static files
+  if request.endswith('.js'):
+    status = '200 OK'
+    headers = [('Content-type', 'text/javascript')]
+    start_response(status, headers)
+    
+    req = load_file(os.path.join('assets', request))
+    page = req.encode('utf-8')
+  elif request.endswith('.css'):
+    status = '200 OK'
+    headers = [('Content-type', 'text/css')]
+    start_response(status, headers)
+    
+    #req = load_file(os.path.join('assets', request))
+    req = ''
+    page = req.encode('utf-8')
+    
+  # handle requests
+  # serve qr
+  elif request == 'qr':
     if convert.is_valid(parameters['addr'][0].rstrip('/')):
       status = '200 OK'
       headers = [('Content-type', 'image/png')]
@@ -182,43 +287,25 @@ def webapp(environ, start_response):
       start_response(status, headers)
       message = "Invalid Address!"
       page = message.encode('utf-8')
-  elif request.endswith('.js'):
+      
+  # serve payment request
+  elif request == 'payment':
     status = '200 OK'
-    headers = [('Content-type', 'text/javascript')]
+    headers = [('Content-type', 'application/json')]
     start_response(status, headers)
-    
-    req = load_file(os.path.join('assets', request))
-    page = req.encode('utf-8')
-  elif request.endswith('.css'):
-    status = '200 OK'
-    headers = [('Content-type', 'text/css')]
-    start_response(status, headers)
-    
-    #req = load_file(os.path.join('assets', request))
-    req = ''
-    page = req.encode('utf-8')
+      
+    json = generate_payment(parameters, ip_addr)
+    page = json.encode('utf-8')
+      
+  # serve default qr + address page
   else:
     status = '200 OK' # HTTP Status
     headers = [('Content-type', 'text/html; charset=utf-8')]  # HTTP Headers
     start_response(status, headers)
     
-    addr = check_ip(ip_addr)
-    if addr:
-      print("REUSE - " + ip_addr + " - " + addr)
-      html = generate_qr_html(addr)
-      page = html.encode('utf-8')
-    else:
-      index = get_index()
-      xpub = get_xpub()
-      addr = get_xpub_address(xpub, index)
-    
-      f = open('ip.list', 'a')
-      f.write(ip_addr + '/' + addr + '\n')
-      f.close()
-      
-      print("NEW - " + ip_addr + " - " + addr)
-      html = generate_qr_html(addr)
-      page = html.encode('utf-8')
+    addr = get_address(ip_addr)
+    html = generate_qr_html(addr, parameters)
+    page = html.encode('utf-8')
   
   return [page]
 
@@ -229,11 +316,9 @@ def start_server():
     httpd.serve_forever()
 
 def main():
+  # init
   find_data_dir()
   index = get_index()
-  #xpub = get_xpub()
-  #addr = get_xpub_address(xpub, index)
-  #print(addr)
   start_server()
   
 
