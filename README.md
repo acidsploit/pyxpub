@@ -21,21 +21,12 @@ __clone repo__
 __create virtualenv and install dependencies__
 
     cd pyxpub/
-    virtualenv env
-    source env/bin/activate
-    pip install requests
-    pip install qrcode
-    pip install image
-    pip install pycoin
-    pip install base58
-    pip install cashaddress
-    pip install json
+    bash setup.sh
 
 __set xpub key__
 
 Copy your xpub key from an Electron Cash wallet and past it in the key.list file.
 
-    touch key.list
     echo 'xpub...' > key.list
 
 __run__
