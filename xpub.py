@@ -198,21 +198,28 @@ def generate_qr_html(addr, parameters):
   _amount = False
   _label = False
   _qruri = "/qr?addr=" + addr
+  _copy = addr
   _amount_label = ""
   
   if 'amount' in parameters:
     _amount = parameters['amount'][0].rstrip('/')
     _qruri += "&amount=" + _amount
     _amount_label += "AMOUNT: " + _amount + " BCH "
+    _copy += "?amount=" + _amount
   if 'label' in parameters:
     _label = parameters['label'][0].rstrip('/')
     _qruri += "&label=" + _label
     _amount_label += "LABEL: " + _label + " "
+    if _amount:
+      _copy += "&message=" + _label
+    else:
+      _copy += "?message=" + _label
 
   filler = {
     'addr': addr,
     'qruri' : _qruri,
     'label' : _amount_label,
+    'copy' : _copy,
   }
   html = load_file('assets/qr.html').format(**filler)
 
@@ -222,6 +229,7 @@ def generate_payment(parameters, ip_addr):
   _amount = False
   _label = False
   _addr = get_address(ip_addr)
+  _legacy = convert.to_legacy_address(_addr)
   _qr = "/qr?addr=" + _addr
   
   if 'amount' in parameters:
@@ -235,6 +243,7 @@ def generate_payment(parameters, ip_addr):
     "payment": {
       "amount": _amount,
       "addr": _addr,
+      "legacy_addr": _legacy,
       "label": _label,
       "qr": _qr,
       }
