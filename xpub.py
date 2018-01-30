@@ -183,7 +183,7 @@ def check_ip(ip):
     f = open('ip.list', 'w+')
     f.close()
     return False
-
+    
 # Utility wrapper function
 def load_file(filename):
   try:
@@ -229,7 +229,7 @@ def generate_payment(parameters, ip_addr):
     _qr += "&amount=" + _amount
   if 'label' in parameters:
     _label = parameters['label'][0]
-    _qr +=  "&message=" + _label
+    _qr +=  "&label=" + _label
     
   _payreq = {
     "payment": {
@@ -270,7 +270,7 @@ def webapp(environ, start_response):
     page = req.encode('utf-8')
     
   # handle requests
-  # serve qr
+  # serve qr image
   elif request == 'qr':
     if convert.is_valid(parameters['addr'][0].rstrip('/')):
       status = '200 OK'
@@ -293,10 +293,10 @@ def webapp(environ, start_response):
     status = '200 OK'
     headers = [('Content-type', 'application/json')]
     start_response(status, headers)
-      
+    
     json = generate_payment(parameters, ip_addr)
     page = json.encode('utf-8')
-      
+    
   # serve default qr + address page
   else:
     status = '200 OK' # HTTP Status
