@@ -88,6 +88,8 @@ You can also generate a new JSON formatted payment request through the api.
 
 __payment request__
 
+[jQuery Example](https://github.com/acidsploit/pyxpub/tree/master/examples/jquery)
+
 Options:
 * amount
 * label
@@ -108,8 +110,6 @@ Options:
           "payment_uri": "bitcoincash:qpej4uw429m9m0wawcphw9v4sch2ymd6qsqh7jx9gl?amount=0.0023&message=SHOP:1Wed2B44"
           }
         }
-
-[jQuery Example](https://github.com/acidsploit/pyxpub/tree/master/examples/jquery)
 
 ### QR image only
 
