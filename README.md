@@ -92,19 +92,22 @@ Options:
 * amount
 * label
 
-        http://localhost:8080/payment?amount=0.0023&label=SHOP:PAYM123
+        http://localhost:8080/payment?amount=0.0023&label=SHOP:1Wed2B44
 
-![pyxpub example 4](https://i.imgur.com/wYjhjMk.png)
+![pyxpub example 4](https://i.imgur.com/xuTKtVR.png)
 
-        curl 'http://localhost:8080/payment?amount=0.0023&label=SHOP:PAYM123'
+        curl 'http://localhost:8080/payment?amount=0.0023&label=SHOP:1Wed2B44'
 
-        {"payment": 
-            {"amount": "0.0023", 
-             "addr": "bitcoincash:qpej4uw429m9m0wawcphw9v4sch2ymd6qsqh7jx9gl", 
-             "label": "SHOP:PAYM123", 
-             "qr": "/qr?addr=bitcoincash:qpej4uw429m9m0wawcphw9v4sch2ymd6qsqh7jx9gl&amount=0.0023&label=SHOP:PAYM123"
-             }
-         }
+        {
+        "payment": {
+          "amount": "0.0023", 
+          "addr": "bitcoincash:qpej4uw429m9m0wawcphw9v4sch2ymd6qsqh7jx9gl", 
+          "legacy_addr": "1BVx9uf5UGJDt1eMqjut8qh1K4mmEeDSFQ", 
+          "label": "SHOP:1Wed2B44", 
+          "qr_img": "/qr?addr=bitcoincash:qpej4uw429m9m0wawcphw9v4sch2ymd6qsqh7jx9gl&amount=0.0023&label=SHOP:1Wed2B44", 
+          "payment_uri": "bitcoincash:qpej4uw429m9m0wawcphw9v4sch2ymd6qsqh7jx9gl?amount=0.0023&message=SHOP:1Wed2B44"
+          }
+        }
 
 ### QR image only
 
