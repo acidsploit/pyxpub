@@ -32,8 +32,7 @@ Copy your xpub key from an Electron Cash wallet and past it in the key.list file
 __run__
 
     cd pyxpub/
-    source env/bin/activate
-    python ./xpub.py
+    bash pyxpub.sh
 
 __access locally__
 
