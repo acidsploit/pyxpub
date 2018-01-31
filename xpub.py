@@ -86,10 +86,10 @@ def get_xpub():
         return xpub
     f.close()
     if xpub == 0:
-      print('No xpub in key.list')
+      print('ERROR: No xpub in key.list')
       sys.exit(2)
   except (IOError, OSError, FileNotFoundError, PermissionError):
-    print('Could not open key.list')
+    print('ERROR: Could not open key.list')
     sys.exit(2)
 
 # Derive address from xpub key and increment address index
@@ -102,6 +102,7 @@ def get_xpub_address(xpub, index):
   caddr = convert.to_cash_address(addr)
   
   # increment index
+  # TODO: error handling
   f = open('index', 'w+')
   index += 1
   f.write(str(index))
@@ -231,13 +232,19 @@ def generate_payment(parameters, ip_addr):
   _addr = get_address(ip_addr)
   _legacy = convert.to_legacy_address(_addr)
   _qr = "/qr?addr=" + _addr
+  _uri = _addr
   
   if 'amount' in parameters:
     _amount = parameters['amount'][0]
     _qr += "&amount=" + _amount
+    _uri += "?amount=" + _amount
   if 'label' in parameters:
     _label = parameters['label'][0]
     _qr +=  "&label=" + _label
+    if _amount:
+      _uri += "&message=" + _label
+    else:
+      _uri += "?message=" + _label
     
   _payreq = {
     "payment": {
@@ -245,10 +252,11 @@ def generate_payment(parameters, ip_addr):
       "addr": _addr,
       "legacy_addr": _legacy,
       "label": _label,
-      "qr": _qr,
-      }
+      "qr_img": _qr,
+      "payment_uri": _uri,
     }
-    
+  }
+  
   _json = json.dumps(_payreq)
   return _json
   
@@ -299,8 +307,13 @@ def webapp(environ, start_response):
       
   # serve payment request
   elif request == 'payment':
+    origin = environ['HTTP_ORIGIN']
     status = '200 OK'
     headers = [('Content-type', 'application/json')]
+    headers.extend([
+            ("Access-Control-Allow-Origin", str(origin)),
+            ("Access-Control-Allow-Credentials", "true")
+    ])
     start_response(status, headers)
     
     json = generate_payment(parameters, ip_addr)
