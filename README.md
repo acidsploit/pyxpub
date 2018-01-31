@@ -109,6 +109,8 @@ Options:
           }
         }
 
+[jQuery Example](https://github.com/acidsploit/pyxpub/tree/master/examples/jquery)
+
 ### QR image only
 
     http://localhost:8080/qr?addr=bitcoincash:qpej4uw429m9m0wawcphw9v4sch2ymd6qsqh7jx9gl&amount=0.0023&label=SHOP:PAYM123
