@@ -25,7 +25,7 @@ __setup environment__
 
 __set xpub key__
 
-Copy your xpub key from an Electron Cash wallet and past it in the key.list file.
+Copy your xpub key from an Electron Cash wallet and paste it in the key.list file.
 
     echo 'xpub...' > key.list
 
