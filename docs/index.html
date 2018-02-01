@@ -1,7 +1,7 @@
 <h1>Pyxpyb - Private Payment Gateway</h1>
 
 <p><a href="https://acidsploit.github.io/pyxpub/">https://acidsploit.github.io/pyxpub/</a></p>
-
+<hr />
 <p>
 Pyxpub is a simple self-hosted webapp that generates unique payment requests for Bitcoin Cash. It can do this as a simple webpage with a Bitcoin Cash address and corresponding QR code or as a JSON request. It can be accessed directly, be embedded in a webpage through an iframe, or you can do JSON requests through the API. All generated Bitcoin Cash addresses are derived from a pre-defined (Electron Cash) xpub key.
 </p>
@@ -18,4 +18,17 @@ Pyxpub is a simple self-hosted webapp that generates unique payment requests for
 <iframe width=100% height=470px scrolling="no" frameborder=0 src="https://donate.devzero.be/?amount=0.0123&label=MESG456"></iframe>
 
 
-
+<h3>JSON Payment Request</h3>
+<pre><code>
+    curl 'http://localhost:8080/payment?amount=0.0023&label=SHOP:1Wed2B44'
+    {
+    "payment": {
+      "amount": "0.0023", 
+      "addr": "bitcoincash:qpej4uw429m9m0wawcphw9v4sch2ymd6qsqh7jx9gl", 
+      "legacy_addr": "1BVx9uf5UGJDt1eMqjut8qh1K4mmEeDSFQ", 
+      "label": "SHOP:1Wed2B44", 
+      "qr_img": "/qr?addr=bitcoincash:qpej4uw429m9m0wawcphw9v4sch2ymd6qsqh7jx9gl&amount=0.0023&label=SHOP:1Wed2B44", 
+      "payment_uri": "bitcoincash:qpej4uw429m9m0wawcphw9v4sch2ymd6qsqh7jx9gl?amount=0.0023&message=SHOP:1Wed2B44"
+      }
+    }
+ <code></pre>
