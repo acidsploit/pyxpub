@@ -63,6 +63,7 @@ Create: /etc/uwsgi/pyxpub.ini
 
     [uwsgi]
     socket = /run/uwsgi/%n.sock
+    processes = 4
     chdir = /srv/http/pyxpub/
     master = true
     plugins = python
