@@ -43,7 +43,7 @@ Browse to http://localhost:8080
 ## Installation (uWSGI + NGINX)
 __install nginx, uwsgi and uwsgi python plugin__
 
-Follow your distributions directions to install these packages.
+Follow your distribution's directions to install these packages.
 
 __insall pyxpub in appropriate location__
 
