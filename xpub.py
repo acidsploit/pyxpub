@@ -345,6 +345,8 @@ def set_headers(environ):
     origin = environ['HTTP_ORIGIN']
     response.set_header("Access-Control-Allow-Origin", str(origin))
     response.set_header("Access-Control-Allow-Credentials", "true")
+  #response.set_header("Access-Control-Allow-Origin", "*")
+  #response.set_header("Access-Control-Allow-Credentials", "true")
 
 #def start_server():
 # Init bottle framework
@@ -417,11 +419,13 @@ def ledger():
 # Serve static files
 @app.route('/static/<filename:path>')
 def send_static(filename):
+  set_headers(request.environ)
   return static_file(filename, root="static/")
 
 @app.route('/react/', strict_slashes=False)
 @app.route('/react/<filename:path>')
 def react(filename='index.html'):
+  set_headers(request.environ)
   return static_file(filename, root="react/")
 
 
