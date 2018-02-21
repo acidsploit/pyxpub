@@ -15,7 +15,7 @@ Pyxpub exposes the needed features of that wallet through an easy to use JSON AP
 All generated Bitcoin Cash addresses are derived from a pre-defined (Electron Cash) xpub key. Address re-use is prevented by keeping track of used addresses.
 
 ### xpub (Electron Cash)
-First, when you create a new wallet with Electron Cash, it is very important to propperly backup and safely store your mnemonic seed. This Electron wallet is your full (send & receive) wallet, make sure it is password protected and also stored safely. You will use it later to retrieve payments. The webapp will use the xpub key to generate receive only addresses on the server, corresponding to the addresses from your Electron wallet. This way we don't need private keys on the server. You can find your wallet's master public key or xpub key through the 'Wallet -> Information' menu.
+First, when you create a new wallet with Electron Cash, it is very important to properly backup and safely store your mnemonic seed. This Electron wallet is your full (send & receive) wallet, make sure it is password protected and also stored safely. You will use it later to retrieve payments. The webapp will use the xpub key to generate receive only addresses on the server, corresponding to the addresses from your Electron wallet. This way we don't need private keys on the server. You can find your wallet's master public key or xpub key through the 'Wallet -> Information' menu.
 
 ## Installation (built-in server)
 __clone repo__
