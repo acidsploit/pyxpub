@@ -111,10 +111,12 @@ __NGINX start & enable at startup__
 
 ## Usage
 ### Direct browser access
+http://localhost:8080
+This will open the React Point-of-Sale app.
 
     
 ### JSON
-You can also generate a new JSON formatted payment request through the api.
+Generate and verify payment requests or look up the sales ledger.
 
 __payment request /api/payment__
 
