@@ -89,7 +89,7 @@ Set up a vhost (preferably with ssl) with following locations and uwsgi_pass:
         server_name pos.devzero.be;
         listen 80;
 
-        root /srv/http/pos.devzero.be/pyxpub;
+        root /srv/http/pyxpub;
     
         location / {
                 try_files $uri @uwsgi;
