@@ -15,7 +15,7 @@ All generated Bitcoin Cash addresses are derived from a pre-defined (Electron Ca
 ### xpub (Electron Cash)
 First, when you create a new wallet with Electron Cash, it is very important to propperly backup and safely store your mnemonic seed. This Electron wallet is your full (send & receive) wallet, make sure it is password protected and also stored safely. You will use it later to retrieve payments. The webapp will use the xpub key to generate receive only addresses on the server, corresponding to the addresses from your Electron wallet. This way we don't need private keys on the server. You can find your wallet's master public key or xpub key through the 'Wallet -> Information' menu.
 
-## Installation (built in server)
+## Installation (built-in server)
 __clone repo__
 
     git clone https://github.com/acidsploit/pyxpub.git pyxpub
