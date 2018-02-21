@@ -86,7 +86,7 @@ Set up a vhost (preferably with ssl) with following locations and uwsgi_pass:
     }
     
     server {
-        server_name pos.devzero.be;
+        server_name yourserver.com;
         listen 80;
 
         root /srv/http/pyxpub;
