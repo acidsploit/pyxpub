@@ -2,26 +2,41 @@
 
 import sys
 import os
-import requests
 import re
-
-from wsgiref.simple_server import make_server
-import urllib.parse
 import datetime
 import qrcode
 import io
 import random
 import base64
 import json
+import time
+
+#dataset
+import dataset
+from stuf import stuf
+
+# Bottle
+from bottle import Bottle, route, request, response, get, abort, debug, template, static_file, redirect
+
+# MTServer - Multi Threaded wsgi server
+from mtbottle import MTServer
+
+# Paste - Multi Threaded wsgi server
+from paste import httpserver
+
 
 #bitcoin stuff
 import pycoin.key
 os.environ["PYCOIN_NATIVE"]="openssl"
 from cashaddress import convert
 
-usage = '''Usage: xpub [DATA_DIRECTORY]
-See the README file for more information.'''
- 
+import verify_tx
+
+debug(True)
+
+db_name = 'sqlite:///pyxpub.db?check_same_thread=False'
+
+
 # Look for the directory containing the configuration files
 def find_data_dir():
   lib_dir = os.path.dirname(os.path.abspath(__file__))
@@ -47,45 +62,36 @@ def find_data_dir():
     if os.path.isfile('key.list'):
       print('Using {dir} as data directory'.format(dir=data_dir))
       break
+    
+def init_db():
+  db = dataset.connect(db_name, row_type=stuf)
+    
+  return db
 
-# Read index file or create one if it does not exist
-def get_index():
-  try:
-    f = open('index', 'r')
-    for line in f.readlines():
-      _ix = line.strip()
-      pattern = re.compile("(\d+)")
-      if pattern.match(_ix):
-        index = int(_ix)
-        f.close()
-        return index
-    f.close()
-  except (IOError, OSError, FileNotFoundError, PermissionError):
-    if FileNotFoundError:
-      index = 0
-      print('Could not find index file. Creating a new one. Assuming index = ' + str(index))
-      f = open('index', 'w+')
-      f.write(str(index))
-      f.close()
-      return index
-    else:
-      print('Could not open index file. Check permissions.')
-      sys.exit(2)
+def get_wallet_index():
+  _db = init_db()
+  _id = 0
+  results = _db.query('SELECT MAX(id) as id FROM payment_requests')
+  for result in results:
+    #print(result.id)
+    _id = result.id
+  
+  return _id
 
 # Read the xpub key from  key.list file
 def get_xpub():
-  xpub = 0
+  _xpub = 0
   try:
     f = open('key.list', 'r')
     for line in f.readlines():
       _key = line.strip()
       pattern = re.compile("xpub")
       if pattern.match(_key, 0):
-        xpub = pycoin.key.Key.from_text(_key)
+        _xpub = pycoin.key.Key.from_text(_key)
         f.close()
-        return xpub
+        return _xpub
     f.close()
-    if xpub == 0:
+    if _xpub == 0:
       print('ERROR: No xpub in key.list')
       sys.exit(2)
   except (IOError, OSError, FileNotFoundError, PermissionError):
@@ -100,32 +106,104 @@ def get_xpub_address(xpub, index):
   xpub_subkey = xpub.subkey(account_type)
   addr = xpub_subkey.subkey(index).bitcoin_address()
   caddr = convert.to_cash_address(addr)
+  #print(caddr)
   
-  # increment index
-  # TODO: error handling
-  f = open('index', 'w+')
-  index += 1
-  f.write(str(index))
-  f.close()
-  
-  return(caddr)
+  #return caddr.upper()
+  return caddr
 
-def get_address(ip):
-  _addr = check_ip(ip)
-  if _addr:
-    print("REUSE - " + ip + " - " + _addr)
+def get_payment_by_ip(ip):
+  _db = init_db()
+  _table = _db['payment_requests']
+  _payment = _table.find_one(ip=ip)
+  if _payment:
+    return _payment
+  else:
+    return False
+  
+def get_payment_by_label(label):
+  _db = init_db()
+  _table = _db['payment_requests']
+  _payment = _table.find_one(label=label)
+  if _payment:
+    return _payment
+  else:
+    return False
+  
+def get_payment_by_addr(addr):
+  _db = init_db()
+  _table = _db['payment_requests']
+  _payment = _table.find_one(addr=addr)
+  if _payment:
+    return _payment
+  else:
+    return False
+
+def update_payment_received(payment_id, received, txid):
+  _db = init_db()
+  _table = _db['payment_requests']
+
+  _table.update(dict(id=payment_id, received=received, txid=txid), ['id'])
+  
+def get_address(ip_addr, amount="", label=""):
+  _payment = False
+  #if ratelimit_ip:
+    #_payment = get_payment_by_ip(ip_addr)
+  #if ratelimit_label and label:
+    #_payment = get_payment_by_label(label)
+  
+  if _payment:
+    _addr =  _payment.addr
     return _addr
   else:
-    _index = get_index()
     _xpub = get_xpub()
+    _index = get_wallet_index()
     _addr = get_xpub_address(_xpub, _index)
-    # TODO: add_ip(ip, addr) with propper error handling
-    print("NEW - " + ip + " - " + _addr)
-    f = open('ip.list', 'a')
-    f.write(ip + '/' + _addr + '\n')
-    f.close()
-    
+    with dataset.connect(db_name, row_type=stuf) as tx:
+      tx['payment_requests'].insert(dict(timestamp=time.time(), ip=ip_addr, addr=_addr, amount=amount, label=label, received=0, confirmations=0, txid="NoTX"))
     return _addr
+  
+def generate_payment(parameters, ip_addr):
+  _amount = False
+  _label = False
+  _payment = False
+  _uri = ""
+  _uri_params = ""
+  _qr = "/qr?addr="
+  _qr_params = ""
+  
+  if 'amount' in parameters:
+    _amount = parameters.amount
+    _qr_params += "&amount=" + _amount
+    _uri_params += "?amount=" + _amount
+  else:
+    abort(400, "Specify an amount!")
+  if 'label' in parameters:
+    _label = parameters.label
+    _qr_params +=  "&label=" + _label
+    if _amount:
+      _uri_params += "&message=" + _label
+    else:
+      _uri_params += "?message=" + _label
+  
+  _addr = get_address(ip_addr, _amount, _label)
+  _legacy = convert.to_legacy_address(_addr)
+  _qr += _addr + _qr_params
+  _uri = _addr + _uri_params
+
+  _payreq = {
+    "payment": {
+      "amount": _amount,
+      #"addr": _addr.lstrip('BITCOINCASH:'),
+      "addr": _addr,
+      "legacy_addr": _legacy,
+      "label": _label,
+      "qr_img": _qr,
+      "payment_uri": _uri,
+    }
+  }
+  
+  _json = json.dumps(_payreq)
+  return _json
 
 # Generate QR code and return the image
 def get_qr(parameters):
@@ -135,21 +213,22 @@ def get_qr(parameters):
   _data = ""
   
   if 'addr' in parameters:
-     _addr = parameters['addr'][0].upper().rstrip('/')
+     _addr = parameters.addr.upper()
+     #_addr = parameters['addr'][0].rstrip('/')
      _data = _addr
   else:
-    return False
+    abort(401, "Specify address")
      
   if 'amount' in parameters and 'label' in parameters:
-    _amount = parameters['amount'][0].rstrip('/')
-    _label = parameters['label'][0].rstrip('/')
+    _amount = parameters.amount
+    _label = parameters.label
     _data += "?amount=" + _amount
     _data += "&message=" + _label
   elif 'amount' in parameters:
-     _amount = parameters['amount'][0].rstrip('/')
+     _amount = parameters.amount
      _data += "?amount=" + _amount
   elif 'label' in parameters:
-     _label = parameters['label'][0].rstrip('/')
+     _label = parameters.label
      _data += "?message=" + _label
      
   #print(_data)
@@ -165,37 +244,7 @@ def get_qr(parameters):
   
   return img
 
-# Check if requesting ip already generated a qr code, re-use previously generated address.
-# This is done to prevent snooping and page reloads to waste addresses.
-# You can setup a cron job to delete ip.list to wipe ip history at desired interval.
-def check_ip(ip):
-  try:
-    f = open('ip.list', 'r')
-    for line in f.readlines():
-      _pair = line.split('/')
-      if _pair[0] == ip:
-        f.close()
-        # return bitcoin address linked to ip
-        return _pair[1].strip('\n')
-    f.close()
-    return False
-  except (FileNotFoundError):
-    print("File ip.list not found! Creating new one.")
-    f = open('ip.list', 'w+')
-    f.close()
-    return False
-    
-# Utility wrapper function
-def load_file(filename):
-  try:
-    src = open(filename, 'r')
-  except (IOError, OSError, FileNotFoundError, PermissionError):
-    src = open(os.path.join(lib_dir, filename), 'r')
-  data = src.read()
-  src.close()
-  return data
-  
-def generate_qr_html(addr, parameters):
+def generate_embed(addr, parameters):
   _amount = False
   _label = False
   _qruri = "/qr?addr=" + addr
@@ -203,12 +252,12 @@ def generate_qr_html(addr, parameters):
   _amount_label = ""
   
   if 'amount' in parameters:
-    _amount = parameters['amount'][0].rstrip('/')
+    _amount = parameters.amount
     _qruri += "&amount=" + _amount
     _amount_label += "AMOUNT: " + _amount + " BCH "
     _copy += "?amount=" + _amount
   if 'label' in parameters:
-    _label = parameters['label'][0].rstrip('/')
+    _label = parameters.label
     _qruri += "&label=" + _label
     _amount_label += "LABEL: " + _label + " "
     if _amount:
@@ -222,126 +271,175 @@ def generate_qr_html(addr, parameters):
     'label' : _amount_label,
     'copy' : _copy,
   }
-  html = load_file('assets/qr.html').format(**filler)
+  html = template('views/qr.html').format(**filler)
 
   return html
 
-def generate_payment(parameters, ip_addr):
+def generate_ledger(parameters, ip_addr):
+  _db = init_db()
+  _ledger = {}
+  
+  for _payment in _db['payment_requests']:
+    _data = {
+              'id': _payment.id,
+              'timestamp': _payment.timestamp,
+              'addr': _payment.addr,
+              'amount': _payment.amount,
+              'label': _payment.label,
+              'received': _payment.received,
+              'confirmations': _payment.confirmations,
+              'txid': _payment.txid,
+            }
+    _ledger[str(_payment.id)] = _data
+    
+  _json = json.dumps(_ledger)
+  return _json
+
+def generate_verify(parameters, ip_addr):
+  _addr = False
   _amount = False
   _label = False
-  _addr = get_address(ip_addr)
-  _legacy = convert.to_legacy_address(_addr)
-  _qr = "/qr?addr=" + _addr
-  _uri = _addr
+  _received = False
+  _payment = False
   
-  if 'amount' in parameters:
-    _amount = parameters['amount'][0]
-    _qr += "&amount=" + _amount
-    _uri += "?amount=" + _amount
+  # Find payment by label, if not verified, set parameters
   if 'label' in parameters:
-    _label = parameters['label'][0]
-    _qr +=  "&label=" + _label
-    if _amount:
-      _uri += "&message=" + _label
+    _payment = get_payment_by_label(parameters.label)
+    if not _payment:
+      abort(400, "ERROR: Unknown Label! - " + parameters.label)
+  # Find payment by addr, if not verified, set parameters
+  elif 'addr' in parameters and 'amount' in parameters:
+    _amount = parameters.amount
+    if convert.is_valid(parameters.addr):
+      _addr = parameters.addr
+      _payment = get_payment_by_addr(_addr)
+      if not _payment:
+        abort(400, "ERROR: Unknown Payment Address! - " + _addr)
     else:
-      _uri += "?message=" + _label
-    
-  _payreq = {
-    "payment": {
-      "amount": _amount,
-      "addr": _addr,
-      "legacy_addr": _legacy,
-      "label": _label,
-      "qr_img": _qr,
-      "payment_uri": _uri,
-    }
-  }
-  
-  _json = json.dumps(_payreq)
-  return _json
-  
-# main webapp logic
-def webapp(environ, start_response):
-  if 'HTTP_X_REAL_IP' in environ:
-    environ['REMOTE_ADDR'] = environ['HTTP_X_REAL_IP']
-  ip_addr = environ['REMOTE_ADDR']
-  
-  request = environ['PATH_INFO'].lstrip('/').split('/')[-1]
-  parameters = urllib.parse.parse_qs(environ['QUERY_STRING'])
-  
-  # serve static files
-  if request.endswith('.js'):
-    status = '200 OK'
-    headers = [('Content-type', 'text/javascript')]
-    start_response(status, headers)
-    
-    req = load_file(os.path.join('assets', request))
-    page = req.encode('utf-8')
-  elif request.endswith('.css'):
-    status = '200 OK'
-    headers = [('Content-type', 'text/css')]
-    start_response(status, headers)
-    
-    #req = load_file(os.path.join('assets', request))
-    req = ''
-    page = req.encode('utf-8')
-    
-  # handle requests
-  # serve qr image
-  elif request == 'qr':
-    if convert.is_valid(parameters['addr'][0].rstrip('/')):
-      status = '200 OK'
-      headers = [('Content-type', 'image/png')]
-      start_response(status, headers)
-      
-      img = get_qr(parameters)
-      output = io.BytesIO()
-      img.save(output, format='PNG')
-      page = output.getvalue()
-    else :
-      status = '200 OK'
-      headers = [('Content-type', 'text/html')]
-      start_response(status, headers)
-      message = "Invalid Address!"
-      page = message.encode('utf-8')
-      
-  # serve payment request
-  elif request == 'payment':
-    origin = environ['HTTP_ORIGIN']
-    status = '200 OK'
-    headers = [('Content-type', 'application/json')]
-    headers.extend([
-            ("Access-Control-Allow-Origin", str(origin)),
-            ("Access-Control-Allow-Credentials", "true")
-    ])
-    start_response(status, headers)
-    
-    json = generate_payment(parameters, ip_addr)
-    page = json.encode('utf-8')
-    
-  # serve default qr + address page
+      abort(400, "Invalid address!")
   else:
-    status = '200 OK' # HTTP Status
-    headers = [('Content-type', 'text/html; charset=utf-8')]  # HTTP Headers
-    start_response(status, headers)
+    abort(400, "Incorrect use of API, RTFM!")
     
-    addr = get_address(ip_addr)
-    html = generate_qr_html(addr, parameters)
-    page = html.encode('utf-8')
+  if _payment.received == 1:
+    return json.dumps({"received": 1})
+  else:
+    _addr = _payment.addr
+    _amount = _payment.amount
+    _label = _payment.label
   
-  return [page]
+  # If payment not received yet, rescan
+  _received = verify_tx.verify(_addr, _amount)
+  
+  # If rescan has positive result, update payment record in database
+  if _received['received'] == 1 and _payment.received == 0:
+    update_payment_received(_payment.id, 1, _received['txid'])
 
-def start_server():
-  with make_server('', 8080, webapp) as httpd:
-    print("Serving on port 8080...")
-    # Serve until process is killed
-    httpd.serve_forever()
+  # Return verification result
+  if _received:
+    return json.dumps(_received)
+  else:
+    return json.dumps({"received": 0})
+
+def set_headers(environ):
+  if  'HTTP_ORIGIN' in environ:
+    origin = environ['HTTP_ORIGIN']
+    response.set_header("Access-Control-Allow-Origin", str(origin))
+    response.set_header("Access-Control-Allow-Credentials", "true")
+
+#def start_server():
+# Init bottle framework
+app = application = Bottle()
+
+@app.route('/')
+@app.route('/react')
+def root():
+  redirect("/react/")
+
+@app.route('/embed')
+def embed():
+  set_headers(request.environ)
+  response.content_type = 'text/html; charset=utf-8' 
+  
+  _ip = request.environ.get('REMOTE_ADDR')
+  _parameters = request.query
+  
+  _addr = get_address(_ip)
+  _html = generate_embed(_addr, _parameters)
+  
+  return _html
+
+@app.route('/qr')
+def qr():
+  set_headers(request.environ)
+  response.content_type = 'image/png'
+  
+  _ip = request.environ.get('REMOTE_ADDR')
+  _parameters = request.query
+  _qr = get_qr(_parameters)
+  _output = io.BytesIO()
+  _qr.save(_output, format='PNG')
+  
+  return _output.getvalue()
+  
+@app.route('/api/payment')
+def payment():
+  set_headers(request.environ)
+  response.content_type = 'application/json'
+  
+  _ip = request.environ.get('REMOTE_ADDR')
+  _parameters = request.query
+  _payment = generate_payment(_parameters, _ip)
+  
+  return _payment
+  
+@app.route('/api/verify')
+def verify():
+  set_headers(request.environ)
+  response.content_type = 'application/json'
+  
+  _ip = request.environ.get('REMOTE_ADDR')
+  _parameters = request.query
+  _verify = generate_verify(_parameters, _ip)
+  
+  return _verify
+  
+@app.route('/api/ledger')
+def ledger():
+  set_headers(request.environ)
+  response.content_type = 'application/json'
+  
+  _ip = request.environ.get('REMOTE_ADDR')
+  _parameters = request.query
+  _ledger = generate_ledger(_parameters, _ip)
+  
+  return _ledger
+
+# Serve static files
+@app.route('/static/<filename:path>')
+def send_static(filename):
+  return static_file(filename, root="static/")
+
+@app.route('/react/', strict_slashes=False)
+@app.route('/react/<filename:path>')
+def react(filename='index.html'):
+  return static_file(filename, root="react/")
+
 
 def main():
   # init
   find_data_dir()
-  index = get_index()
-  start_server()
+  index = get_wallet_index()
+  xpub = get_xpub()
+  print('Wallet using xpub key: ' + xpub.as_text()[:20] + '...' + xpub.as_text()[-8:])
+  print('Starting wallet at index: ' + str(index))
+  
+  # MTServer wsgi server
+  app.run(server=MTServer, host='0.0.0.0', port=8080, thread_count=3)
+  
+  # Paste wsgi server
+  #httpserver.serve(app, host='0.0.0.0', port=8082)
+  
+  #start_server()
   
 
 if __name__ == "__main__":
