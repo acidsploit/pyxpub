@@ -2,7 +2,9 @@
  
 Pyxpub is a simple webapp that generates unique payment requests for Bitcoin Cash. It exposes the needed features of a receive-only wallet through a JSON API to enable quick development of Point-of-Sale systems. This without the developer having to worry about the sensitive bits. Pyxpub makes it easy to follow Bitcoin best practices and future-proofs your application in order to scale towards future needs.
 
-Pyxpub also includes a Point-of-Sale app by default. Check out the demo at https://pos.devzero.be
+Pyxpub also includes a Point-of-Sale app by default. 
+
+Check out the demo at https://pos.devzero.be (github repo: https://github.com/acidsploit/react-pos)
 
 ## Introduction
 As per Bitcoin best practices it is preferred to use a new receiving address for each payment. This for security and privacy implications for both you and your customers or donators. Also, we do not want any private keys on the server generating the receiving address, nor would we want them on any PoS system. This can easily be achieved by using an hd-wallet as described in [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki). This is the default wallet type when you create a new wallet with [Electron Cash](https://electroncash.org/).
