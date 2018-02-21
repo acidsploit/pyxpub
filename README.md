@@ -154,7 +154,7 @@ or
       or 
       {"received": 1}
 
-__payment verification request /api/ledger__
+__sales ledger request /api/ledger__
 
     curl 'http://localhost:8080/api/ledger'
       
