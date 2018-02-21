@@ -1,5 +1,5 @@
 $(document).ready(function(){
-  $.getJSON( "http://localhost:8080/payment?amount=0.0023&label=SHOP:1Wed2B44", function( data ) {
+  $.getJSON( "http://localhost:8080/api/payment?amount=0.0023&label=SHOP:1Wed2B44", function( data ) {
     var items = [];
     var payment = data['payment'];
     $.each( payment, function( key, val ) {
