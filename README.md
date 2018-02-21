@@ -38,7 +38,7 @@ __run__
 
 __access locally__
 
-Browse to http://localhost:8080;
+Browse to http://localhost:8080
 
 ## Installation (uWSGI + NGINX)
 __install nginx, uwsgi and uwsgi python plugin__
