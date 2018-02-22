@@ -52,7 +52,7 @@ __insall pyxpub in appropriate location__
     cd /srv/http/
     git clone https://github.com/acidsploit/pyxpub.git pyxpub
     
-    mkdir public_html/
+    mkdir /srv/http/public_html/
     mv pyxpub/react/ public_html/
     cd pyxpub/
     bash setup.sh
