@@ -61,6 +61,7 @@ __insall pyxpub in appropriate location__
     
     
 __uWSGI config__
+
 Create: /etc/uwsgi/pyxpub.ini
 
     [uwsgi]
