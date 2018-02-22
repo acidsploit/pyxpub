@@ -52,6 +52,8 @@ __insall pyxpub in appropriate location__
     cd /srv/http/
     git clone https://github.com/acidsploit/pyxpub.git pyxpub
     
+    mkdir public_html/
+    mv pyxpub/react/ public_html/
     cd pyxpub/
     bash setup.sh
     echo 'xpub...' > key.list
@@ -90,14 +92,24 @@ Set up a vhost (preferably with ssl) with following locations and uwsgi_pass:
         server_name yourserver.com;
         listen 80;
 
-        root /srv/http/pyxpub;
-    
-        location / {
-                try_files $uri @uwsgi;
+        root /srv/http/pyxpub/public_html;
+        
+        rewrite ^/$ /react permanent;
+
+        location /react {
+            index index.html;
+        }
+        
+        location /qr {
+            try_files $uri @uwsgi;
+        }
+
+        location /api {
+            try_files $uri @uwsgi;
         }
 
         location /embed {
-                return 403;
+            return 403;
         }
 
         location @uwsgi {
