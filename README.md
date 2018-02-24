@@ -132,9 +132,10 @@ This will open the React Point-of-Sale app.
 
     
 ### JSON
-Generate and verify payment requests or look up the sales ledger.
 
 __payment request /api/payment__
+
+Generate new payment request.
 
 Options:
 * amount
@@ -156,6 +157,8 @@ Options:
         
 __payment verification request /api/verify__
 
+Verify payment of payment request
+
 Options:
 * addr
 * amount
@@ -169,6 +172,8 @@ or
       {"received": 1}
 
 __sales ledger request /api/ledger__
+
+Fetch sales ledger.
 
     curl 'http://localhost:8080/api/ledger'
       
@@ -206,6 +211,8 @@ __sales ledger request /api/ledger__
     }
 
 __exchange rate request /api/rate__
+
+Fetch exchange rate or list supported currencies for specified source.
 
 Options:
 
