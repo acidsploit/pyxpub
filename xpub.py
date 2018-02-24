@@ -31,6 +31,7 @@ os.environ["PYCOIN_NATIVE"]="openssl"
 from cashaddress import convert
 
 import verify_tx
+import exchangerate
 
 debug(True)
 
@@ -320,6 +321,7 @@ def generate_verify(parameters, ip_addr):
   else:
     abort(400, "Incorrect use of API, RTFM!")
     
+  # TODO: return more payment details. see verify_tx.verify()
   if _payment.received == 1:
     return json.dumps({"received": 1})
   else:
@@ -339,6 +341,28 @@ def generate_verify(parameters, ip_addr):
     return json.dumps(_received)
   else:
     return json.dumps({"received": 0})
+  
+def generate_rate(parameters, ip_addr):
+  _currency = ""
+  _source = ""
+  if 'currency' in parameters and 'source' in parameters:
+    if not exchangerate.is_supported(parameters.currency, parameters.source):
+      abort(400, "ERROR: Unsupported Currency! => " + parameters.currency)
+    else:
+      _r = exchangerate.get_rate(parameters.currency, parameters.source)
+      _price = {
+          'currency': _r.currency,
+          'price'   : _r.rate,
+        }
+      return _price
+  elif 'source' in parameters:
+    _r = exchangerate.get_currencies(parameters.source)
+    return _r
+  else:
+    abort(400, "ERROR: Incorrect use of api! ")
+      
+
+  
 
 def set_headers(environ):
   if  'HTTP_ORIGIN' in environ:
@@ -348,7 +372,6 @@ def set_headers(environ):
   #response.set_header("Access-Control-Allow-Origin", "*")
   #response.set_header("Access-Control-Allow-Credentials", "true")
 
-#def start_server():
 # Init bottle framework
 app = application = Bottle()
 
@@ -416,6 +439,17 @@ def ledger():
   
   return _ledger
 
+@app.route('/api/rate')
+def rate():
+  set_headers(request.environ)
+  response.content_type = 'application/json'
+  
+  _ip = request.environ.get('REMOTE_ADDR')
+  _parameters = request.query
+  _rate = generate_rate(_parameters, _ip)
+  
+  return _rate
+
 # Serve static files
 @app.route('/static/<filename:path>')
 def send_static(filename):
@@ -441,7 +475,7 @@ def main():
   app.run(server=MTServer, host='0.0.0.0', port=8080, thread_count=3)
   
   # Paste wsgi server
-  #httpserver.serve(app, host='0.0.0.0', port=8082)
+  #httpserver.serve(app, host='0.0.0.0', port=8080)
   
   #start_server()
   
