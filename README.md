@@ -208,12 +208,18 @@ __sales ledger request /api/ledger__
 __exchange rate request /api/rate__
 
 Options:
+
 * source (cryptocompate, kraken, coinbase)
 * currency
+
  => Returns exchange rate for requested source and currency
+ 
 or
+
 * source (cryptocompate, kraken, coinbase)
+
  => Returns array of supported currencies for specified source
+ 
  
     curl 'http://localhost:8080/api/rate?source=cryptocompare'
     
