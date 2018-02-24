@@ -162,7 +162,9 @@ Verify payment of payment request
 Options:
 * addr
 * amount
+
 or
+
 * label
 
       curl 'http://localhost:8080/api/verify?addr=bitcoincash:qpemxfnepk9f0g2yzgsyk4ynnklaaunr7g99rrwas9&amount=0.0023'
