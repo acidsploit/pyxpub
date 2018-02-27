@@ -355,12 +355,13 @@ def generate_rate(parameters, ip_addr):
           'price'   : _r.rate,
         }
       return _price
+  # TODO: Error handling is_supported()
   elif 'source' in parameters:
     _r = exchangerate.get_currencies(parameters.source)
     return _r
   else:
-    abort(400, "ERROR: Incorrect use of api! ")
-      
+    _r = exchangerate.get_sources()
+    return _r
 
   
 
