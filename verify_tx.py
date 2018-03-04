@@ -26,14 +26,20 @@ explorers = [
     'api_tx': 'https://bch-insight.bitpay.com/api/tx/',
   },
   # Needs legacy address
-  {
-    'api_addr': 'https://cashexplorer.bitcoin.com/api/addr/{legacy}',
-    'api_tx': 'https://cashexplorer.bitcoin.com/api/tx/',
-  },
+  #{
+    #'api_addr': 'https://cashexplorer.bitcoin.com/api/addr/{legacy}',
+    #'api_tx': 'https://cashexplorer.bitcoin.com/api/tx/',
+  #},
   {
     'api_addr': 'https://bccblock.info/api/addr/{legacy}',
     'api_tx': 'https://bccblock.info/api/tx/',
   },
+  {
+    'api_addr': 'https://bitcoincash.blockexplorer.com/api/addr/{legacy}',
+    'api_tx': 'https://bitcoincash.blockexplorer.com/api/tx/',
+  },
+  
+  
 ]
 
 def randomize():

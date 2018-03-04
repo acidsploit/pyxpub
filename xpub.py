@@ -16,7 +16,7 @@ import dataset
 from stuf import stuf
 
 # Bottle
-from bottle import Bottle, route, request, response, get, abort, debug, template, static_file, redirect
+from bottle import Bottle, route, request, response, get, post, abort, debug, template, static_file, redirect, run
 
 # MTServer - Multi Threaded wsgi server
 from mtbottle import MTServer
@@ -73,9 +73,10 @@ def get_wallet_index():
   _db = init_db()
   _id = 0
   results = _db.query('SELECT MAX(id) as id FROM payment_requests')
+
   for result in results:
-    #print(result.id)
-    _id = result.id
+    if (result.id):
+      _id = result.id
   
   return _id
 
@@ -147,10 +148,18 @@ def update_payment_received(payment_id, received, txid):
   
 def get_address(ip_addr, amount="", label=""):
   _payment = False
+  _order = 0
   #if ratelimit_ip:
     #_payment = get_payment_by_ip(ip_addr)
   #if ratelimit_label and label:
     #_payment = get_payment_by_label(label)
+    
+  if label:
+    _db = init_db()
+    _table = _db['order_items']
+    _item = _table.find_one(label=label)
+    if _item:
+      _order = 1
   
   if _payment:
     _addr =  _payment.addr
@@ -160,7 +169,7 @@ def get_address(ip_addr, amount="", label=""):
     _index = get_wallet_index()
     _addr = get_xpub_address(_xpub, _index)
     with dataset.connect(db_name, row_type=stuf) as tx:
-      tx['payment_requests'].insert(dict(timestamp=time.time(), ip=ip_addr, addr=_addr, amount=amount, label=label, received=0, confirmations=0, txid="NoTX"))
+      tx['payment_requests'].insert(dict(timestamp=time.time(), ip=ip_addr, addr=_addr, amount=amount, label=label, received=0, confirmations=0, txid="NoTX", order=_order))
     return _addr
   
 def generate_payment(parameters, ip_addr):
@@ -290,6 +299,7 @@ def generate_ledger(parameters, ip_addr):
               'received': _payment.received,
               'confirmations': _payment.confirmations,
               'txid': _payment.txid,
+              'order': _payment.order,
             }
     _ledger[str(_payment.id)] = _data
     
@@ -363,6 +373,52 @@ def generate_rate(parameters, ip_addr):
     _r = exchangerate.get_sources()
     return _r
 
+def generate_order(parameters, ip_addr):
+  if 'label' in parameters:
+    _order = get_order(parameters.label)
+    _items = get_order_items(parameters.label)
+    order = {}
+    order['label'] = parameters.label
+    items = []
+    
+    for _item in _items:
+      item = {
+                'id': _item.item_id,
+                'timestamp': _item.timestamp,
+                'name': _item.name,
+                'currency': _item.currency,
+                'bch': _item.bch,
+                'count': _item.count,
+                'exchangeRATE': _item.exchange_rate,
+              }
+      items.append(item)
+      
+    for _element in _order:
+      #print(_element.label, _element.type)
+      order['timestamp'] = _element.timestamp
+      order[_element.type] = _element.data
+      
+    
+    order['items'] = items
+    
+    #print(order)
+    return order
+    
+  return { 'error': 0 }
+  
+def get_order(label):
+  _db = init_db()
+  _table = _db['orders']
+  _order = _table.find(label=label)
+  
+  return _order
+
+def get_order_items(label):
+  _db = init_db()
+  _table = _db['order_items']
+  _items = _table.find(label=label)
+  
+  return _items
   
 
 def set_headers(environ):
@@ -370,6 +426,11 @@ def set_headers(environ):
     origin = environ['HTTP_ORIGIN']
     response.set_header("Access-Control-Allow-Origin", str(origin))
     response.set_header("Access-Control-Allow-Credentials", "true")
+    response.set_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    response.set_header("Access-Control-Allow-Headers", "Content-Type")
+    response.set_header("Access-Control-Request-Headers", "X-Requested-With, accept, content-type")
+    
+    
   #response.set_header("Access-Control-Allow-Origin", "*")
   #response.set_header("Access-Control-Allow-Credentials", "true")
 
@@ -450,6 +511,63 @@ def rate():
   _rate = generate_rate(_parameters, _ip)
   
   return _rate
+
+@app.route('/api/order')
+def order():
+  set_headers(request.environ)
+  response.content_type = 'application/json'
+  
+  _ip = request.environ.get('REMOTE_ADDR')
+  _parameters = request.query
+  _order = generate_order(_parameters, _ip)
+  
+  return _order
+
+@app.route('/api/ping')
+def ping():
+  set_headers(request.environ)
+  response.content_type = 'application/json'
+  
+  _ip = request.environ.get('REMOTE_ADDR')
+  _parameters = request.query
+  
+  _pong = { 'pong': 1 }
+  
+  return _pong
+
+@app.route('/api/order', method=['POST', 'OPTIONS'])
+def order():
+  set_headers(request.environ)
+  response.content_type = 'application/json'
+  
+  if request.method == 'POST':
+    _now = time.time()
+    _json = request.json
+    
+    label = _json['label']
+    items = _json['items']
+    subtotalBCH = _json['subtotalBCH']
+    
+    discount = _json['discount']
+    discountBCH = _json['discountBCH']
+    tax = _json['tax']
+    taxBCH = _json['taxBCH']
+    
+    totalBCH = _json['totalBCH']
+    exchangeRATE = _json['exchangeRATE']
+    currency = _json['currency']
+    
+    for key in _json:
+      if (key == 'items'):
+        for item in _json[key]:
+          print("INSERT item   (" + label + "): " + item['name'] + " => " + item['bch'])
+          with dataset.connect(db_name, row_type=stuf) as tx:
+            tx['order_items'].insert(dict(label=label, timestamp=item['timestamp'], item_id=item['id'], name=item['name'], currency=item['currency'], bch=item['bch'], count=item['count'], exchange_rate=item['exchangeRATE']))
+      elif (key != 'label' and key != 'items'):
+        print("INSERT order (" + label + "): " + key + " => " + str(_json[key]))
+        with dataset.connect(db_name, row_type=stuf) as tx:
+          tx['orders'].insert(dict(label=label, timestamp=_now, type=key, data=_json[key]))
+
 
 # Serve static files
 @app.route('/static/<filename:path>')
