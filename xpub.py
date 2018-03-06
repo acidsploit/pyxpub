@@ -58,7 +58,7 @@ def find_data_dir():
   for data_dir in data_dir_locations:
     try:
       os.chdir(data_dir)
-    except (OSError, NotADirectoryError):
+    except (OSError):
       continue
     if os.path.isfile('key.list'):
       print('Using {dir} as data directory'.format(dir=data_dir))
