@@ -42,7 +42,25 @@ __access locally__
 
 Browse to http://localhost:8080
 
-## Installation (uWSGI + NGINX)
+## Raspbian Quick Install (uWSGI + NGINX)
+
+A simple script (raspbian.sh) to deploy pyxpub on a fresh respbian installation. Gets you up and running in no time on a Raspberry Pi.
+
+    sudo apt-get update
+    sudo apt-get upgrade
+    sudo apt-get install git
+    sudo reboot
+    
+    sudo mkdir /srv/wsgi
+    cd /srv/wsgi
+    sudo git clone https://github.com/acidsploit/pyxpub.git
+    cd pyxpub/
+    sudo bash raspbian.sh
+    
+Access pyxpub through your raspberry pi ip address. Example: http://192.168.1.15
+
+
+## Installation Linux (uWSGI + NGINX)
 __install nginx, uwsgi and uwsgi python plugin__
 
 Follow your distribution's directions to install these packages.
