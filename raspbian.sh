@@ -69,7 +69,6 @@ cd /srv/wsgi/pyxpub/
 virtualenv -p python3 env
 source env/bin/activate
 pip3 install -r requirements.txt
-touch key.list
 rm -rf /srv/http/pyxpub/react/
 cp -vfr /srv/wsgi/pyxpub/react /srv/http/pyxpub/
 
