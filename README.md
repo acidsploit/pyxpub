@@ -44,7 +44,7 @@ Browse to http://localhost:8080
 
 ## Raspbian Quick Install (uWSGI + NGINX)
 
-A simple script (raspbian.sh) to deploy pyxpub on a fresh respbian installation. Gets you up and running in no time on a Raspberry Pi.
+A simple script (raspbian.sh) to deploy pyxpub on a fresh Raspbian installation. Gets you up and running in no time on a Raspberry Pi.
 
     sudo apt-get update
     sudo apt-get upgrade
