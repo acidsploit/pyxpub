@@ -55,6 +55,7 @@ A simple script (raspbian.sh) to deploy pyxpub on a fresh respbian installation.
     cd /srv/wsgi
     sudo git clone https://github.com/acidsploit/pyxpub.git
     cd pyxpub/
+    echo 'xpub...' > key.list
     sudo bash raspbian.sh
     
 Access pyxpub through your raspberry pi ip address. Example: http://192.168.1.15
