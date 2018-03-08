@@ -60,6 +60,10 @@ A simple script (raspbian.sh) to deploy pyxpub on a fresh Raspbian installation.
     
 Access pyxpub through your raspberry pi ip address. Example: http://192.168.1.15
 
+Monitor the process:
+
+    sudo tail -f /var/log/uwsgi/app/pyxpub.log
+
 
 ## Installation Linux (uWSGI + NGINX)
 __install nginx, uwsgi and uwsgi python plugin__
