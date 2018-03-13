@@ -42,8 +42,8 @@ db_name = 'sqlite:///pyxpub.db?check_same_thread=False'
 def find_data_dir():
   lib_dir = os.path.dirname(os.path.abspath(__file__))
   data_dir_locations = [
-    os.path.join(os.path.expanduser('~'), '.xpub'),
-    os.path.join(os.path.expanduser('~'), '.config', 'xpub'),
+    os.path.join(os.path.expanduser('~'), '.pyxpub'),
+    os.path.join(os.path.expanduser('~'), '.config', 'pyxpub'),
     lib_dir,
     os.getcwd()
   ]
@@ -198,7 +198,7 @@ def generate_payment(parameters, ip_addr):
   _addr = get_address(ip_addr, _amount, _label)
   _legacy = convert.to_legacy_address(_addr)
   _qr += _addr + _qr_params
-  _uri = _addr + _uri_params
+  _uri = _addr + _uri_params + "&editable=false"
 
   _payreq = {
     "payment": {
@@ -240,6 +240,8 @@ def get_qr(parameters):
   elif 'label' in parameters:
      _label = parameters.label
      _data += "?message=" + _label
+     
+  _data += "&editable=false"
      
   #print(_data)
      
