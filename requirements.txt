@@ -6,7 +6,7 @@ cashaddress==1.0.5
 certifi==2018.11.29
 chardet==3.0.4
 dataset==1.1.2
-Django==2.1.7
+Django==2.1.11
 idna==2.8
 image==1.5.27
 jaraco.functools==2.0
