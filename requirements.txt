@@ -16,7 +16,7 @@ more-itertools==6.0.0
 normality==1.0.0
 parse==1.11.1
 Paste==3.0.6
-Pillow==5.4.1
+Pillow==6.2.0
 pip==19.0.2
 portend==2.3
 pycoin==0.80
