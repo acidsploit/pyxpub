@@ -1,7 +1,7 @@
 alembic==1.0.7
 banal==0.4.2
 base58==1.0.3
-bottle==0.12.16
+bottle==0.12.19
 cashaddress==1.0.5
 certifi==2018.11.29
 chardet==3.0.4
