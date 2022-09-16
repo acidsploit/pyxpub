@@ -10,7 +10,7 @@ Django==2.1.7
 idna==2.8
 image==1.5.27
 jaraco.functools==2.0
-Mako==1.0.7
+Mako==1.2.2
 MarkupSafe==1.1.0
 more-itertools==6.0.0
 normality==1.0.0
