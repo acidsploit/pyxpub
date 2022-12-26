@@ -32,4 +32,4 @@ SQLAlchemy==1.2.18
 stuf==0.9.16
 tempora==1.14
 urllib3==1.24.1
-wheel==0.33.0
+wheel==0.38.1
