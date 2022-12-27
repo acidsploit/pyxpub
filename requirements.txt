@@ -26,7 +26,7 @@ python-editor==1.0.4
 pytz==2018.9
 qrcode==6.1
 requests==2.21.0
-setuptools==40.8.0
+setuptools==65.5.1
 six==1.12.0
 SQLAlchemy==1.2.18
 stuf==0.9.16
